@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }}{% endblock %}
+{% block page_title %}Task Detail{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{{ url_for('tasks') }}" class="text-decoration-none text-muted" style="font-size:.875rem">
+    <i class="bi bi-arrow-left me-1"></i>Back to Tasks
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- ── Main Info ── -->
+  <div class="col-12 col-lg-8">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold"><i class="bi bi-file-text me-2 text-muted"></i>Task Details</span>
+        <div class="d-flex gap-2">
+          <span class="badge-status badge-{{ task.status }}">
+            {{ task.status | replace('_', ' ') | title }}
+          </span>
+          <span class="badge-status badge-{{ task.priority }}">
+            {{ task.priority | capitalize }} Priority
+          </span>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3 class="fw-bold mb-3" style="font-family:'Instrument Serif',serif">{{ task.title }}</h3>
+
+        {% if task.description %}
+        <div class="mb-4 p-3 rounded-3" style="background:#f8fafc;border:1px solid #e2e8f0;font-size:.9rem;line-height:1.7">
+          {{ task.description | replace('\n', '<br>') | safe }}
+        </div>
+        {% else %}
+        <p class="text-muted fst-italic" style="font-size:.875rem">No description provided.</p>
+        {% endif %}
+
+        <div class="row g-3 mt-1" style="font-size:.875rem">
+          <div class="col-6">
+            <div class="text-muted mb-1" style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase">
+              Created By
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="user-avatar" style="width:28px;height:28px;font-size:.7rem">
+                {{ task.creator.username[0].upper() }}
+              </span>
+              {{ task.creator.username }}
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted mb-1" style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase">
+              Assigned To
+            </div>
+            {% if task.assignee %}
+            <div class="d-flex align-items-center gap-2">
+              <span class="user-avatar" style="width:28px;height:28px;font-size:.7rem">
+                {{ task.assignee.username[0].upper() }}
+              </span>
+              {{ task.assignee.username }}
+            </div>
+            {% else %}
+            <span class="text-muted">Unassigned</span>
+            {% endif %}
+          </div>
+          <div class="col-6">
+            <div class="text-muted mb-1" style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase">
+              Created On
+            </div>
+            {{ task.created_at.strftime('%b %d, %Y at %H:%M') }}
+          </div>
+          <div class="col-6">
+            <div class="text-muted mb-1" style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase">
+              Due Date
+            </div>
+            {{ task.due_date.strftime('%b %d, %Y') if task.due_date else 'No due date' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Actions ── -->
+  <div class="col-12 col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-arrow-repeat me-2 text-muted"></i>Update Status
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('update_status', task_id=task.id) }}">
+          <div class="mb-3">
+            <label class="form-label" style="font-size:.8rem;font-weight:600;color:#64748b">
+              Current Status
+            </label>
+            <select name="status" class="form-select">
+              <option value="pending"     {% if task.status=='pending'     %}selected{% endif %}>⏳ Pending</option>
+              <option value="in_progress" {% if task.status=='in_progress' %}selected{% endif %}>🔄 In Progress</option>
+              <option value="completed"   {% if task.status=='completed'   %}selected{% endif %}>✅ Completed</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-check2 me-1"></i>Save Status
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Timeline / meta card -->
+    <div class="card">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-info-circle me-2 text-muted"></i>Quick Info
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush" style="font-size:.85rem">
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Task ID</span>
+            <span class="fw-semibold">#{{ task.id }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Status</span>
+            <span class="badge-status badge-{{ task.status }}">
+              {{ task.status | replace('_', ' ') | title }}
+            </span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Priority</span>
+            <span class="badge-status badge-{{ task.priority }}">{{ task.priority | capitalize }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Due Date</span>
+            <span>{{ task.due_date.strftime('%b %d, %Y') if task.due_date else '—' }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    {% if current_user.is_admin %}
+    <div class="mt-3">
+      <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}"
+            onsubmit="return confirm('Permanently delete this task? This cannot be undone.')">
+        <button type="submit" class="btn btn-outline-danger w-100">
+          <i class="bi bi-trash me-1"></i>Delete Task
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- ── Greeting ── -->
+<div class="mb-4">
+  <h2 class="mb-1 fw-bold" style="font-family:'Instrument Serif',serif;font-size:1.6rem">
+    Good to see you, {{ current_user.username }} 👋
+  </h2>
+  <p class="text-muted mb-0" style="font-size:.875rem">
+    Here's a summary of {% if current_user.is_admin %}all team tasks{% else %}your assigned tasks{% endif %}.
+  </p>
+</div>
+
+<!-- ── Stat Cards ── -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eff6ff">
+        <i class="bi bi-list-task text-primary"></i>
+      </div>
+      <div>
+        <div class="stat-value">{{ total }}</div>
+        <div class="stat-label">Total Tasks</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fef3c7">
+        <i class="bi bi-hourglass-split" style="color:#d97706"></i>
+      </div>
+      <div>
+        <div class="stat-value" style="color:#d97706">{{ pending }}</div>
+        <div class="stat-label">Pending</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#dbeafe">
+        <i class="bi bi-arrow-repeat" style="color:#1d4ed8"></i>
+      </div>
+      <div>
+        <div class="stat-value" style="color:#1d4ed8">{{ in_progress }}</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#d1fae5">
+        <i class="bi bi-check-circle" style="color:#059669"></i>
+      </div>
+      <div>
+        <div class="stat-value" style="color:#059669">{{ completed }}</div>
+        <div class="stat-label">Completed</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Progress Bar ── -->
+{% if total > 0 %}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span class="fw-semibold" style="font-size:.875rem">Overall Completion</span>
+      <span class="fw-bold" style="color:#059669">{{ ((completed / total) * 100) | round(1) }}%</span>
+    </div>
+    <div class="progress" style="height:10px;border-radius:20px">
+      <div class="progress-bar bg-success" role="progressbar"
+           style="width:{{ ((completed / total) * 100) | round }}%;border-radius:20px"
+           aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}"></div>
+    </div>
+    <div class="d-flex gap-3 mt-2" style="font-size:.75rem;color:#64748b">
+      <span>{{ completed }} completed</span>
+      <span>{{ in_progress }} in progress</span>
+      <span>{{ pending }} pending</span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Recent Tasks ── -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-clock-history me-2 text-muted"></i>Recent Tasks</span>
+    <a href="{{ url_for('tasks') }}" class="btn btn-sm btn-outline-primary">View All</a>
+  </div>
+  <div class="card-body p-0">
+    {% if recent %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Assigned To</th>
+            <th>Due Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for task in recent %}
+          <tr>
+            <td>
+              <a href="{{ url_for('task_detail', task_id=task.id) }}"
+                 class="text-decoration-none fw-semibold text-dark">
+                {{ task.title }}
+              </a>
+            </td>
+            <td>
+              <span class="badge-status badge-{{ task.status }}">
+                {{ task.status | replace('_', ' ') | title }}
+              </span>
+            </td>
+            <td>
+              <span class="badge-status badge-{{ task.priority }}">{{ task.priority | capitalize }}</span>
+            </td>
+            <td>
+              {% if task.assignee %}
+                <span class="d-flex align-items-center gap-1">
+                  <span class="user-avatar" style="width:24px;height:24px;font-size:.65rem">
+                    {{ task.assignee.username[0].upper() }}
+                  </span>
+                  {{ task.assignee.username }}
+                </span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td style="font-size:.85rem;color:#64748b">
+              {{ task.due_date.strftime('%b %d, %Y') if task.due_date else '—' }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <p class="mb-2 fw-semibold">No tasks yet</p>
+      {% if current_user.is_admin %}
+      <a href="{{ url_for('create_task') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i>Create First Task
+      </a>
+      {% else %}
+      <p class="text-muted" style="font-size:.875rem">Tasks assigned to you will appear here.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

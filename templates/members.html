@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Members{% endblock %}
+{% block page_title %}Team Members{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h2 class="mb-1 fw-bold" style="font-family:'Instrument Serif',serif;font-size:1.5rem">Team Members</h2>
+  <p class="text-muted mb-0" style="font-size:.875rem">{{ members | length }} member(s) in your workspace.</p>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% if members %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Tasks Assigned</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for member in members %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="user-avatar">{{ member.username[0].upper() }}</div>
+                <span class="fw-semibold">{{ member.username }}</span>
+                {% if member.id == current_user.id %}
+                <span class="badge bg-light text-muted" style="font-size:.65rem">You</span>
+                {% endif %}
+              </div>
+            </td>
+            <td style="font-size:.875rem;color:#475569">{{ member.email }}</td>
+            <td>
+              <span class="badge {% if member.is_admin %}bg-primary{% else %}bg-secondary{% endif %} rounded-pill"
+                    style="font-size:.7rem">
+                {{ member.role | capitalize }}
+              </span>
+            </td>
+            <td>
+              {% set count = member.tasks | length %}
+              <span class="fw-semibold">{{ count }}</span>
+              <span class="text-muted" style="font-size:.8rem">task{{ 's' if count != 1 }}</span>
+            </td>
+            <td style="font-size:.85rem;color:#64748b">
+              {{ member.created_at.strftime('%b %d, %Y') }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-people"></i>
+      <p class="fw-semibold mb-0">No members yet</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
